@@ -1,0 +1,22 @@
+.onedrive-backup-fallback {
+  padding: 12px;
+  font-family: inherit;
+  color: var(--body-color);
+  background: var(--bg-color);
+}
+.onedrive-backup-fallback pre {
+  background: var(--inverse-background);
+  padding: 8px;
+  border-radius: 4px;
+}
+.onedrive-actions {
+  margin-top: 8px;
+}
+.onedrive-actions .btn {
+  background: #2b7cff;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
