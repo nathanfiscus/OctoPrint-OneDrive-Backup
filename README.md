@@ -37,6 +37,8 @@ Once this is done, return the plugin, and it should show your account name & a s
 
 ### Configuring the backup upload
 
+When you delete a backup in OctoPrint, the plugin will also remove the matching backup file from your configured OneDrive folder.
+
 ![Select Folder](images/config-3.png)
 
 You can then configure the folder to save backups to. Select 'Change Folder' and then you should be able to navigate

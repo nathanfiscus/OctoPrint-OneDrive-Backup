@@ -88,6 +88,37 @@ class OneDriveBackupPlugin(
             else:
                 _logger.debug("Backup created but no OneDrive folder configured")
 
+        if event in (
+            "plugin_backup_backup_deleted",
+            "plugin_backup_backup_removed",
+            "plugin_backup_file_deleted",
+        ):
+            folder_id = self._settings.get(["folder", "id"])
+            if not folder_id:
+                _logger.debug("Backup deleted but no OneDrive folder configured")
+                return
+
+            file_name = payload.get("name")
+            if not file_name:
+                _logger.warning("Backup deletion event received without file name")
+                return
+
+            def delete_with_error_handling():
+                try:
+                    if not self.onedrive.delete_file(file_name=file_name, folder_id=folder_id):
+                        _logger.warning(
+                            f"Failed to delete OneDrive backup '{file_name}' from folder {folder_id}"
+                        )
+                except Exception as e:
+                    _logger.error(
+                        f"Unexpected error during OneDrive backup deletion: {e}",
+                        exc_info=True,
+                    )
+
+            t = threading.Thread(target=delete_with_error_handling)
+            t.daemon = True
+            t.start()
+
     def on_upload_progress(self, progress):
         # Called by the onedrive client for every chunk uploaded
         self.send_message("upload_progress", {"progress": progress})

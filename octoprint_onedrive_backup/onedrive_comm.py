@@ -379,6 +379,45 @@ class OneDriveComm:
 
         return data
 
+    def delete_file(self, file_name: str, folder_id: str) -> bool:
+        """
+        Delete a file from OneDrive.
+
+        Parameters
+        ----------
+        file_name : str
+            Name of the file to remove from OneDrive
+        folder_id : str
+            OneDrive folder ID containing the file
+
+        Returns
+        -------
+        bool
+            True if deletion succeeded, False otherwise
+        """
+        accounts = self.client.get_accounts()
+        if not accounts:
+            self._logger.error("No accounts registered, can't delete file")
+            return False
+
+        if not file_name:
+            self._logger.error("No file name provided for deletion")
+            return False
+
+        delete_endpoint = (
+            f"/me/drive/items/{folder_id}:/{urllib.parse.quote(file_name)}:/"
+        )
+
+        response = self._graph_request(delete_endpoint, method="DELETE")
+
+        if isinstance(response, dict) and "error" in response:
+            error_msg = response.get("error", {}).get("message", "Unknown error")
+            self._logger.error(f"Error deleting OneDrive file '{file_name}': {error_msg}")
+            return False
+
+        self._logger.info(f"Deleted OneDrive file '{file_name}' from folder {folder_id}")
+        return True
+
     def upload_file(
         self,
         file_name: str,
@@ -386,7 +425,7 @@ class OneDriveComm:
         upload_location_id: str,
         on_upload_progress: Callable = lambda x: None,
         on_upload_complete: Callable = lambda: None,
-        on_upload_error: Callable = lambda x: None,
+        on_upload_error: Callable = lambda: None,
     ) -> Optional[Dict[str, str]]:
         """
         Upload a file to OneDrive.
