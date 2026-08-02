@@ -23,7 +23,7 @@ plugin_package = "octoprint_onedrive_backup"
 plugin_name = "OctoPrintOneDriveBackup"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "1.1.1"
+plugin_version = "1.1.2"
 plugin_cmdclass = versioneer.get_cmdclass()
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
