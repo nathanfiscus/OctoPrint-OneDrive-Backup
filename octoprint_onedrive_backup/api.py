@@ -1,5 +1,5 @@
 import logging
-from octo_onedrive.onedrive import AuthInProgressError
+from .onedrive_comm import AuthInProgressError
 
 
 class Commands:
