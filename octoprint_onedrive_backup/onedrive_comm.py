@@ -84,17 +84,38 @@ class PersistentTokenStore(SerializableTokenCache):
 
     def add(self, event, **kwargs):
         """Override to persist cache when new tokens are added."""
-        super().add(event, **kwargs)
+        # Use a permissive signature to stay compatible with msal internals
+        try:
+            super().add(event, **kwargs)
+        except TypeError:
+            # Fallback for alternate signatures
+            super().add(event)
         self.save()
 
-    def modify(self, credential_type, old_entry, new_key_value_pairs):
-        """Override to persist cache when tokens are modified."""
-        super().modify(credential_type, old_entry, new_key_value_pairs)
+    def modify(self, *args, **kwargs):
+        """Override to persist cache when tokens are modified.
+
+        Accepts flexible args/kwargs to remain compatible with different msal versions.
+        """
+        super().modify(*args, **kwargs)
         self.save()
 
-    def remove_item(self, item):
-        """Override to persist cache when items are removed."""
-        super().remove_item(item)
+    def remove_item(self, *args, **kwargs):
+        """Override to persist cache when items are removed.
+
+        Accepts flexible args/kwargs to remain compatible with different msal versions.
+        """
+        try:
+            super().remove_item(*args, **kwargs)
+        except TypeError:
+            # Fallback to single-arg call
+            if args:
+                super().remove_item(args[0])
+            elif "item" in kwargs:
+                super().remove_item(kwargs["item"])
+            else:
+                # As a last resort, call without arguments
+                super().remove_item()
         self.save()
 
     def _encrypt(self, content: str) -> bytes:
