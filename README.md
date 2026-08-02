@@ -11,7 +11,7 @@ This is a fork of cp2004 original work. AI was used to fix the incompatibilities
 Install the plugin via the bundled Plugin Manager or manually using this URL:
 
 ```
-https://github.com/cp2004/OctoPrint-OneDrive-Backup/releases/latest/download/release.zip
+https://github.com/nathanfiscus/OctoPrint-OneDrive-Backup/releases/latest/download/release.zip
 ```
 
 **Warning**: This plugin requires Python 3.7 or newer to install. To find out more about upgrading your OctoPrint install
