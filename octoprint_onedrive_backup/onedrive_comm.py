@@ -329,6 +329,40 @@ class OneDriveComm:
             "folders": folders,
         }
 
+    def list_files(self, folder_id: Optional[str] = None) -> Any:
+        """
+        List files (non-folder children) in a given OneDrive folder.
+
+        Parameters
+        ----------
+        folder_id : str, optional
+            Parent folder ID (if None, lists root)
+
+        Returns
+        -------
+        list or dict
+            List of items (dicts with `id` and `name`) or error dict
+        """
+        response = self._list(folder_id)
+
+        if isinstance(response, dict) and "error" in response:
+            return response
+
+        files = []
+        for item in response:
+            # Files in Graph have a 'file' key; folders have 'folder'
+            if "folder" in item:
+                continue
+            try:
+                files.append({
+                    "name": item.get("name"),
+                    "id": item.get("id"),
+                })
+            except Exception:
+                continue
+
+        return files
+
     def _list(self, item_id: Optional[str] = None) -> Any:
         """
         List items in a given location (internal method).

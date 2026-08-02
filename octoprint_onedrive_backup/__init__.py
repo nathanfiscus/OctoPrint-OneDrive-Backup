@@ -69,10 +69,12 @@ class OneDriveBackupPlugin(
             folder_id = self._settings.get(["folder", "id"])
             if folder_id:
                 def upload_with_error_handling():
+                    result = None
                     try:
-                        self.onedrive.upload_file(
-                            file_name=payload["name"],
-                            file_path=payload["path"],
+                        # Perform upload; keep the result for diagnostics if needed
+                        result = self.onedrive.upload_file(
+                            file_name=payload.get("name"),
+                            file_path=payload.get("path"),
                             upload_location_id=folder_id,
                             on_upload_progress=self.on_upload_progress,
                             on_upload_complete=self.on_upload_complete,
@@ -80,44 +82,45 @@ class OneDriveBackupPlugin(
                         )
                     except Exception as e:
                         _logger.error(f"Unexpected error during backup upload: {e}", exc_info=True)
-                        self.on_upload_error(e)
+                        try:
+                            self.on_upload_error(e)
+                        except Exception:
+                            pass
+
+                    # After upload (regardless of success), reconcile OneDrive folder with local backups
+                    try:
+                        local_dir = os.path.dirname(payload.get("path", ""))
+                        if local_dir and os.path.isdir(local_dir):
+                            local_files = set(
+                                f for f in os.listdir(local_dir) if os.path.isfile(os.path.join(local_dir, f))
+                            )
+                        else:
+                            local_files = set()
+
+                        remote_items = self.onedrive.list_files(folder_id)
+
+                        if isinstance(remote_items, dict) and "error" in remote_items:
+                            _logger.warning(f"Unable to list OneDrive files for cleanup: {remote_items}")
+                        else:
+                            for item in remote_items:
+                                name = item.get("name")
+                                if not name:
+                                    continue
+                                if name not in local_files:
+                                    try:
+                                        deleted = self.onedrive.delete_file(file_name=name, folder_id=folder_id)
+                                        if not deleted:
+                                            _logger.warning(f"Failed to delete remote backup '{name}'")
+                                    except Exception as e:
+                                        _logger.error(f"Error deleting remote file '{name}': {e}", exc_info=True)
+                    except Exception as e:
+                        _logger.error(f"Error during OneDrive cleanup: {e}", exc_info=True)
 
                 t = threading.Thread(target=upload_with_error_handling)
                 t.daemon = True
                 t.start()
             else:
                 _logger.debug("Backup created but no OneDrive folder configured")
-
-        if event in (
-            "plugin_backup_backup_deleted",
-            "plugin_backup_backup_removed",
-            "plugin_backup_file_deleted",
-        ):
-            folder_id = self._settings.get(["folder", "id"])
-            if not folder_id:
-                _logger.debug("Backup deleted but no OneDrive folder configured")
-                return
-
-            file_name = payload.get("name")
-            if not file_name:
-                _logger.warning("Backup deletion event received without file name")
-                return
-
-            def delete_with_error_handling():
-                try:
-                    if not self.onedrive.delete_file(file_name=file_name, folder_id=folder_id):
-                        _logger.warning(
-                            f"Failed to delete OneDrive backup '{file_name}' from folder {folder_id}"
-                        )
-                except Exception as e:
-                    _logger.error(
-                        f"Unexpected error during OneDrive backup deletion: {e}",
-                        exc_info=True,
-                    )
-
-            t = threading.Thread(target=delete_with_error_handling)
-            t.daemon = True
-            t.start()
 
     def on_upload_progress(self, progress):
         # Called by the onedrive client for every chunk uploaded
