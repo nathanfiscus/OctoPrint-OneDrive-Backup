@@ -23,7 +23,7 @@ plugin_package = "octoprint_onedrive_backup"
 plugin_name = "OctoPrintOneDriveBackup"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = versioneer.get_version()
+plugin_version = "1.1.0"
 plugin_cmdclass = versioneer.get_cmdclass()
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
@@ -31,13 +31,13 @@ plugin_cmdclass = versioneer.get_cmdclass()
 plugin_description = """Automatically upload backups to Microsoft OneDrive"""
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
-plugin_author = "Charlie Powell"
+plugin_author = "Nathan Fiscus"
 
 # The plugin's author's mail address.
-plugin_author_email = "cp2004.github@gmail.com"
+plugin_author_email = "nathan.fiscus@gmail.com"
 
 # The plugin's homepage URL. Can be overwritten within OctoPrint's internal data via __plugin_url__ in the plugin module
-plugin_url = "https://github.com/cp2004/OneDrive-Backup"
+plugin_url = "https://github.com/nathanfiscus/OctoPrint-OneDrive-Backup"
 
 # The plugin's license. Can be overwritten within OctoPrint's internal data via __plugin_license__ in the plugin module
 plugin_license = "AGPLv3"
