@@ -2,9 +2,14 @@
 
 Automatically upload OctoPrint backups to OneDrive when they are created.
 
+# Credit
+
+This is a fork of cp2004 original work. AI was used to fix the incompatibilities in the Microsoft Graph API.
+
 ## Installation
 
 Install the plugin via the bundled Plugin Manager or manually using this URL:
+
 ```
 https://github.com/cp2004/OctoPrint-OneDrive-Backup/releases/latest/download/release.zip
 ```
@@ -57,20 +62,4 @@ The author of this plugin is not responsible for any damage caused as a result o
 
 Please see the [contributing guidelines](CONTRIBUTING.md) for more information.
 
-## Sponsors
-
-- [@KenLucke](https://github.com/KenLucke)
-- [@CmdrCody51](https://github.com/CmdrCody51)
-
-As well as 2 others supporting me regularly through [GitHub Sponsors](https://github.com/sponsors/cp2004)!
-
-## Supporting my efforts
-
-![GitHub Sponsors](https://img.shields.io/github/sponsors/cp2004?style=for-the-badge&label=Sponsor!&color=red&link=https%3A%2F%2Fgithub.com%2Fsponsors%2Fcp2004)
-
-I created this project in my spare time, and do my best to support the community with issues and help using it. If you have found this useful or enjoyed using it then please consider [supporting it's development! ❤️](https://github.com/sponsors/cp2004). You can sponsor monthly or one time, for any amount you choose.
-
-## Check out my other plugins
-
-You can see all of my published OctoPrint plugins [on the OctoPrint Plugin Repository!](https://plugins.octoprint.org/by_author/#charlie-powell) Or, if you're feeling nosy and want to see what else I'm working on, check out my [GitHub profile](https://github.com/cp2004).
 ## ☁️

@@ -44,7 +44,10 @@ plugin_license = "AGPLv3"
 
 # Any additional requirements besides OctoPrint should be listed here
 plugin_requires = [
-    "octo-onedrive==0.0.2"  # My own package, for common code between the two onedrive plugins
+    "msal>=1.26.0,<2",  # Microsoft Authentication Library
+    "cryptography>=42.0.4,<43",  # Token encryption/decryption
+    "python-dateutil",  # Date parsing
+    "requests>=2.28.0",  # HTTP requests
 ]
 
 ### --------------------------------------------------------------------------------------------------------------------

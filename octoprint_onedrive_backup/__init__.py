@@ -1,11 +1,12 @@
 import threading
 import os
+import logging
 from typing import Optional
 
 import octoprint.plugin
 
 from .api import Commands, OneDriveBackupApi
-from octo_onedrive import OneDriveComm
+from .onedrive_comm import OneDriveComm
 
 APPLICATION_ID = "1fbab959-f7f1-43c4-a800-5f7f58eb068f"  # Not a secret :)
 
@@ -15,6 +16,8 @@ SCOPES = [
     # See https://github.com/AzureAD/microsoft-authentication-library-for-python/issues/450
     "Files.ReadWrite",
 ]
+
+_logger = logging.getLogger(__name__)
 
 
 class OneDriveBackupPlugin(
@@ -30,15 +33,20 @@ class OneDriveBackupPlugin(
         self.api: Optional[OneDriveBackupApi] = None
 
     def initialize(self):
-        self.api = OneDriveBackupApi(self)
+        try:
+            self.api = OneDriveBackupApi(self)
 
-        self.onedrive = OneDriveComm(
-            app_id=APPLICATION_ID,
-            scopes=SCOPES,
-            token_cache_path=os.path.join(self.get_plugin_data_folder(), "cache.bin"),
-            encryption_key=self._settings.global_get(["server", "secretKey"]),
-            logger="octoprint.plugins.onedrive_backup.OneDriveComm"
-        )
+            self.onedrive = OneDriveComm(
+                app_id=APPLICATION_ID,
+                scopes=SCOPES,
+                token_cache_path=os.path.join(self.get_plugin_data_folder(), "cache.bin"),
+                encryption_key=self._settings.global_get(["server", "secretKey"]),
+                logger="octoprint.plugins.onedrive_backup.OneDriveComm"
+            )
+            _logger.info("OneDrive plugin initialized successfully")
+        except Exception as e:
+            _logger.error(f"Failed to initialize OneDrive plugin: {e}", exc_info=True)
+            raise
 
     # SimpleApiPlugin
     def on_api_get(self, request):
@@ -60,19 +68,25 @@ class OneDriveBackupPlugin(
             # Check if a folder has been configured
             folder_id = self._settings.get(["folder", "id"])
             if folder_id:
-                t = threading.Thread(
-                    target=self.onedrive.upload_file,
-                    kwargs={
-                        "file_name": payload["name"],
-                        "file_path": payload["path"],
-                        "upload_location_id": folder_id,
-                        "on_upload_progress": self.on_upload_progress,
-                        "on_upload_complete": self.on_upload_complete,
-                        "on_upload_error": self.on_upload_error,
-                    },
-                )
+                def upload_with_error_handling():
+                    try:
+                        self.onedrive.upload_file(
+                            file_name=payload["name"],
+                            file_path=payload["path"],
+                            upload_location_id=folder_id,
+                            on_upload_progress=self.on_upload_progress,
+                            on_upload_complete=self.on_upload_complete,
+                            on_upload_error=self.on_upload_error,
+                        )
+                    except Exception as e:
+                        _logger.error(f"Unexpected error during backup upload: {e}", exc_info=True)
+                        self.on_upload_error(e)
+
+                t = threading.Thread(target=upload_with_error_handling)
                 t.daemon = True
                 t.start()
+            else:
+                _logger.debug("Backup created but no OneDrive folder configured")
 
     def on_upload_progress(self, progress):
         # Called by the onedrive client for every chunk uploaded
@@ -80,7 +94,18 @@ class OneDriveBackupPlugin(
 
     def on_upload_error(self, error):
         # If the upload fails, this will be called so we can notify the user
-        self.send_message("upload_error", {"error": error})
+        _logger.error(f"OneDrive upload error: {error}", exc_info=True)
+        error_msg = str(error)
+
+        # Provide helpful diagnostics for common errors
+        if "400" in error_msg or "Bad Request" in error_msg:
+            error_msg += " (This may be due to Microsoft Graph API changes. Please check your folder selection)"
+        elif "401" in error_msg or "Unauthorized" in error_msg:
+            error_msg += " (Authentication issue. Please re-authenticate)"
+        elif "404" in error_msg:
+            error_msg += " (Folder not found. Please check your folder selection)"
+
+        self.send_message("upload_error", {"error": error_msg})
 
     def on_upload_complete(self):
         self.send_message("upload_complete", {})

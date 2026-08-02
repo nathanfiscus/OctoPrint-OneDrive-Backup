@@ -1,5 +1,4 @@
 import logging
-
 from octo_onedrive.onedrive import AuthInProgressError
 
 
@@ -9,6 +8,7 @@ class Commands:
     GetFoldersByID = "foldersById"
     SetFolder = "setFolder"
     Forget = "forget"
+    GetStatus = "getStatus"  # New command to check plugin status
 
     @staticmethod
     def list_commands():
@@ -18,6 +18,7 @@ class Commands:
             Commands.GetFoldersByID: ["id"],
             Commands.SetFolder: ["id", "path"],
             Commands.Forget: [],
+            Commands.GetStatus: [],
         }
 
 
@@ -59,15 +60,21 @@ class OneDriveBackupApi:
             }
 
         if command == Commands.GetFolders:
-            folders = self.plugin.onedrive.list_folders()
-
-            return folders
+            try:
+                folders = self.plugin.onedrive.list_folders()
+                return folders
+            except Exception as e:
+                self._logger.error(f"Error listing folders: {e}", exc_info=True)
+                return {"error": str(e)}
 
         if command == Commands.GetFoldersByID:
-            item_id = data.get("id")
-            folders = self.plugin.onedrive.list_folders(item_id)
-
-            return folders
+            try:
+                item_id = data.get("id")
+                folders = self.plugin.onedrive.list_folders(item_id)
+                return folders
+            except Exception as e:
+                self._logger.error(f"Error listing folders by ID: {e}", exc_info=True)
+                return {"error": str(e)}
 
         if command == Commands.SetFolder:
             folder_id = data.get("id")
@@ -80,3 +87,11 @@ class OneDriveBackupApi:
 
         if command == Commands.Forget:
             self.plugin.onedrive.forget_account()
+
+        if command == Commands.GetStatus:
+            # Return diagnostic information about the plugin status
+            return {
+                "accounts": self.plugin.onedrive.list_accounts(),
+                "flow_in_progress": self.plugin.onedrive.flow_in_progress is not None,
+                "folder_configured": bool(self.plugin._settings.get(["folder", "id"])),
+            }
